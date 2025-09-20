@@ -1,39 +1,58 @@
 name: codebook
+
+# Controls when the action will run. 
 on:
+  # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches:
-      - main
+    branches: [ main ]
+    paths-ignore:
+     - 'README.md'
+     - 'codebook.pdf'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+     - 'README.md'
+     - 'codebook.pdf'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  build-codebook:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
     runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - name: Get codebook source
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check Out Code
         uses: actions/checkout@v4
         with:
-          path: source
-      - name: Get codebook pdf branch
-        uses: actions/checkout@v4
-        with:
-          ref: pdf
-          path: pdf
-      - name: Get Ubuntu fonts
+          fetch-depth: 0
+
+      - name: Install LaTeX + fonts
         run: |
-          wget https://assets.ubuntu.com/v1/0cef8205-ubuntu-font-family-0.83.zip -O ubuntu-font.zip
-          unzip ubuntu-font.zip
-      - name: Build
-        uses: xu-cheng/latex-action@v3
-        with:
-          root_file: source/codebook.tex
-          latexmk_use_xelatex: true
-          latexmk_shell_escape: true
-          work_in_root_file_dir: true
-          extra_system_packages: "ttf-fonts-cjk ttf-inconsolata"
-      - name: Push codebook.pdf
+          sudo apt-get update
+          sudo apt-get install -y texlive-xetex texlive-latex-extra texlive-fonts-extra \
+                                  fonts-noto-cjk fonts-inconsolata latexmk
+      - name: Build PDF
         run: |
-          cp source/pdf/codebook.pdf pdf/codebook.pdf
-          cd pdf
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add .
-          git commit -m "Auto build, $(date +'%Y-%m-%d_%H:%M:%S')"
-          git push
+          latexmk -xelatex -shell-escape -interaction=nonstopmode -file-line-error codebook.tex
+
+      - name: Move codebook.pdf
+        run: |
+          mkdir tmp
+          mv codebook.pdf tmp
+          git checkout pdf
+          mv tmp/codebook.pdf .
+
+      - name: Push codebook
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          # Optional but recommended
+          # Defaults to "Apply automatic changes"
+          branch: pdf
+          commit_message: auto build codebook.pdf
+          file_pattern: codebook.pdf
