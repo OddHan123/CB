@@ -26,6 +26,9 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      - name: Debug log
+        run: cat codebook.log || true
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Check Out Code
         uses: actions/checkout@v4
