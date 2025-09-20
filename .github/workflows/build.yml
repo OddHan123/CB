@@ -27,7 +27,7 @@ jobs:
           latexmk_use_xelatex: true
           latexmk_shell_escape: true
           work_in_root_file_dir: true
-          extra_system_packages: "fonts-noto-cjk fonts-inconsolata"
+          extra_system_packages: "noto-fonts-cjk fonts-inconsolata"
       - name: Push codebook.pdf
         run: |
           cp source/pdf/codebook.pdf pdf/codebook.pdf
